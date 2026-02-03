@@ -6,7 +6,8 @@ pluralizeListTitles = false
 enableGitInfo = true
 
 [params]
-	themeVariant = "relearn-dark"
+	themeVariant = "zen-dark"
+	collapsibleMenu = true
 	disableLandingPageButton = true
 	showVisitedLinks = true
 	ordersectionsby = 'date'
@@ -14,3 +15,9 @@ enableGitInfo = true
 [caches]
 	[caches.images]
 		dir = ':cacheDir/images'
+
+[markup]
+	[markup.goldmark]
+		[markup.goldmark.parser]
+			[markup.goldmark.parser.attribute]
+				block = true
