@@ -83,7 +83,7 @@ typedef struct VkBaseInStructure {
 ```
 So the implementation knows the exact type from `sType` and can follow the `pNext` chain downwards until it's null, brilliant! The way `ash` maps this is by having builder methods on structs, then the `default` method fills out that `sType` for you based on the type and zero initializes everything else. Vulkan *usually* has sane defaults for things you don't have to fill out when they're zeroed out, so this works great in practice. 
 
-To handle `pNext` it has a `push` method that can only be called on top level structs and takes in a reference to an extension struct that it adds to the *end* of the `pNext` chain. So if the current chain looks like `A -> B -> C` and you call `A.push(&mut D)` then the chain will look like `A -> B -> C -> D`.
+To handle `pNext` it has a `push` method that can only be called on top level structs and takes in a reference to an extension struct, then prepends it between the root and the first pointer of the `pNext` chain. So if the current chain looks like `A -> B -> C` and you call `A.push(&mut D)` then the chain will look like `A -> D -> B -> C`.
 ## Actually creating the instance
 Looking at the rest of `VkInstanceCreateInfo` it looks like this:
 ````c {wrap="false"}
