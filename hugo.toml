@@ -6,6 +6,7 @@ pluralizeListTitles = false
 enableGitInfo = true
 
 [params]
+	themeVariant = "relearn-dark"
 	disableLandingPageButton = true
 	showVisitedLinks = true
 	ordersectionsby = 'date'

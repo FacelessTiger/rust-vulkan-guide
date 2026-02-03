@@ -4,7 +4,7 @@ title = 'Project Setup'
 +++
 ## Workspace setup
 For reasons, we'll get into later, we are gonna want to organize our project into a workspace. At the root of your project make a `Cargo.toml` and put this inside:
-```toml
+````toml {lineNos="true" wrap="false"}
 [workspace]
 resolver = "3"
 members = [
@@ -13,14 +13,14 @@ members = [
 
 [patch.crates-io]
 ash = { git = "https://github.com/FacelessTiger/ash.git" }
-```
+````
 Note the patch, since Vulkan is a C API we're gonna want to use Rust bindings to actually interface with it. Luckily the `ash` crate is great bindings! An issue though is that as of writing this article it's pretty out-of-date due to the maintainers focusing on rewriting how they generate the bindings. So, we're going to patch in a custom fork that just merges [this pr that upgrades the Vulkan headers to 1.4.341](https://github.com/ash-rs/ash/pull/1028), [this one that adds wrappers for Vulkan 1.4 device functions](https://github.com/ash-rs/ash/pull/1000), and finally [this one that adds functions for descriptor heap](https://github.com/ash-rs/ash/pull/1027). 
 
 If you don't know what all that means don't worry about it, it effectively just makes it up to date enough for our purposes.
 
 ## Project setup
 Now create the `guide` binary crate as usual, with the given `Cargo.toml`
-```toml
+````toml {lineNos="true" wrap="false"}
 [package]
 name = "guide"
 version = "0.1.0"
@@ -29,7 +29,7 @@ edition = "2024"
 [dependencies]
 ash = { git = "https://github.com/FacelessTiger/ash.git" }
 gpu-allocator = "0.28.0"
-```
+````
 Vulkan normally requires you to manually handle memory allocations for images and buffers and whatever else. Normally making a whole custom allocator is overboard for most projects, so we'll just use the `gpu-allocator` crate for that.
 
 ## End result
