@@ -1,0 +1,11 @@
+baseURL = 'https://facelesstiger.github.io/'
+languageCode = 'en-us'
+title = 'Rust Vulkan Guide'
+theme = 'hugo-theme-relearn'
+pluralizeListTitles = false
+enableGitInfo = true
+
+[params]
+	disableLandingPageButton = true
+	showVisitedLinks = true
+	ordersectionsby = 'date'
