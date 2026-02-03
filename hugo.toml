@@ -9,3 +9,7 @@ enableGitInfo = true
 	disableLandingPageButton = true
 	showVisitedLinks = true
 	ordersectionsby = 'date'
+
+[caches]
+	[caches.images]
+		dir = ':cacheDir/images'
