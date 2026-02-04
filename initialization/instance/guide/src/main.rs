@@ -1,11 +1,11 @@
 use ash::vk;
 
-pub struct Context {
+pub struct Engine {
     _entry: ash::Entry,
     pub instance: ash::Instance,
 }
 
-impl Context {
+impl Engine {
     pub fn new() -> anyhow::Result<Self> {
         unsafe {
             let entry = ash::Entry::load()?;
@@ -31,8 +31,8 @@ impl Context {
 }
 
 fn main() -> anyhow::Result<()> {
-    let context = Context::new()?;
-    context.destroy()?;
+    let engine = Engine::new()?;
+    engine.destroy()?;
 
     Ok(())
 }
