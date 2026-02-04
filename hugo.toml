@@ -1,5 +1,5 @@
 baseURL = 'https://rust-vulkan-guide.com'
-languageCode = 'en-us'
+defaultContentLanguage = 'en'
 title = 'Rust Vulkan Guide'
 theme = 'hugo-theme-relearn'
 pluralizeListTitles = false
@@ -22,6 +22,20 @@ enableGitInfo = true
 			[markup.goldmark.parser.attribute]
 				block = true
 
-[[menu.shortcuts]]
-	name = "<i class='fab fa-fw fa-github'></i> Tutorial Code"
-	url = "https://github.com/FacelessTiger/rust-vulkan-guide/tree/tutorial-code"
+[languages]
+	[languages.en]
+		contentDir = 'content/en'
+		languageName = 'English'
+		weight = 1
+		[[languages.en.menu.shortcuts]]
+			name = "<i class='fab fa-fw fa-github'></i> Tutorial code"
+			url = "https://github.com/FacelessTiger/rust-vulkan-guide/tree/tutorial-code"
+
+	[languages.es]
+		contentDir = 'content/es'
+		languageName = 'Español'
+		title = 'Spanish Rust Vulkan Guide'
+		weight = 2
+		[[languages.es.menu.shortcuts]]
+			name = "<i class='fab fa-fw fa-github'></i> Código del tutorial"
+			url = "https://github.com/FacelessTiger/rust-vulkan-guide/tree/tutorial-code"
