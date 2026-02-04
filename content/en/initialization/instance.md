@@ -3,7 +3,7 @@ date = '2026-02-02T16:25:53-07:00'
 title = 'Instance'
 +++
 ## Context struct
-We're going to encapsulate most of our objects we create then have to haul around (`Instance`, `Device`, etc.) into one `Context` struct for the sake of convenience. We're also going to handle error handling with the `anyhow` crate, feel free to use more proper error handling methods but that is not in the scope of this guide. Add to `guide`'s `Cargo.toml`:
+We're going to encapsulate most of our objects we create then have to haul around (`Instance`, `Device`, etc.) into one god like `Engine` struct for the sake of convenience. We're also going to handle error handling with the `anyhow` crate, feel free to use more proper error handling methods but that is not in the scope of this guide. Add to `guide`'s `Cargo.toml`:
 ````toml {wrap="false"}
 [dependencies]
 anyhow = "1.0.100"
@@ -12,12 +12,12 @@ Then we can set up the project like so
 ````rust {lineNos="true" wrap="false"}
 use ash::vk;
 
-pub struct Context {
+pub struct Engine {
 	_entry: ash::Entry,
 	pub instance: ash::Instance,
 }
 
-impl Context {
+impl Engine {
 	pub fn new() -> anyhow::Result<Self> {
 		unsafe {
 			todo!();
@@ -32,15 +32,15 @@ impl Context {
 }
 
 fn main() -> anyhow::Result<()> {
-	let context = Context::new()?;
-	context.destroy()?;
+	let engine = Engine::new()?;
+	engine.destroy()?;
 
 	Ok(())
 }
 ````
 `ash::entry` we haven't talked about yet, it's pretty simple it just initially links to the Vulkan implementation and loads the functions we have to use before instance creation. Since it links to Vulkan we have to hold onto it. 
 
-Also notice we have a `destroy` function that consumes `self` instead of implementing `Drop`. The reason for this is that Vulkan has more limitations on when we can destroy stuff then the `Drop` trait enforces. For example, once we start making `Buffer`'s you can't destroy buffers *after* the instance is destroyed, but the auto-running `Drop` may do so. Using consuming destroy functions lets us explicitly control the order.
+Also notice we have a `destroy` function that consumes `self` instead of implementing `Drop`. The reason for this is that Vulkan has more limitations on when we can destroy stuff then the `Drop` trait enforces. For example, once we start making `Buffer`'s you need info about the device or allocator in order to actually destroy it, but the auto-running `Drop` doesn't let you provide arguments. Using consuming destroy functions gives us much more control.
 ## How ash maps to the Vulkan spec
 To start with let's actually create the entry, which is pretty simple and self-explanatory.
 ```rust
@@ -153,40 +153,40 @@ By the end of this section your file should look something like below:
 ````rust {lineNos="true" wrap="false"}
 use ash::vk;
 
-pub struct Context {
-	_entry: ash::Entry,
-	pub instance: ash::Instance,
+pub struct Engine {
+    _entry: ash::Entry,
+    pub instance: ash::Instance,
 }
 
-impl Context {
-	pub fn new() -> anyhow::Result<Self> {
-		unsafe {
+impl Engine {
+    pub fn new() -> anyhow::Result<Self> {
+        unsafe {
             let entry = ash::Entry::load()?;
             let instance = entry.create_instance(&vk::InstanceCreateInfo::default()
                 .application_info(&vk::ApplicationInfo::default()
                     .api_version(vk::API_VERSION_1_4)
-                ), 
-            None)?;
-            
+                ),
+                                                 None)?;
+
             Ok(Self {
                 _entry: entry,
                 instance,
             })
-		}
-	}
+        }
+    }
 
-	pub fn destroy(self) -> anyhow::Result<()> {
-		unsafe {
+    pub fn destroy(self) -> anyhow::Result<()> {
+        unsafe {
             self.instance.destroy_instance(None);
-			Ok(())
-		}
-	}
+            Ok(())
+        }
+    }
 }
 
 fn main() -> anyhow::Result<()> {
-	let context = Context::new()?;
-	context.destroy()?;
+    let engine = Engine::new()?;
+    engine.destroy()?;
 
-	Ok(())
+    Ok(())
 }
 ````
