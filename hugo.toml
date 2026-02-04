@@ -21,3 +21,7 @@ enableGitInfo = true
 		[markup.goldmark.parser]
 			[markup.goldmark.parser.attribute]
 				block = true
+
+[[menu.shortcuts]]
+	name = "<i class='fab fa-fw fa-github'></i> Tutorial Code"
+	url = "https://github.com/FacelessTiger/rust-vulkan-guide/tree/tutorial-code"
