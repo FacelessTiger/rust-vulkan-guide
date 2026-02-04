@@ -177,6 +177,7 @@ impl Context {
 
 	pub fn destroy(self) -> anyhow::Result<()> {
 		unsafe {
+            self.instance.destroy_instance(None);
 			Ok(())
 		}
 	}
