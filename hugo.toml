@@ -1,4 +1,4 @@
-baseURL = 'https://facelesstiger.github.io/'
+baseURL = 'https://rust-vulkan-guide.com'
 languageCode = 'en-us'
 title = 'Rust Vulkan Guide'
 theme = 'hugo-theme-relearn'
