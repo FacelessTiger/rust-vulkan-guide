@@ -1,0 +1,9 @@
+[package]
+name = "guide"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ash = { git = "https://github.com/FacelessTiger/ash.git" }
+gpu-allocator = "0.28.0"
+anyhow = "1.0.100"
