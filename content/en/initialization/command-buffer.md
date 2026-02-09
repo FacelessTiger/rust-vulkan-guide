@@ -54,4 +54,4 @@ impl Engine {
     }
 }
 ````
-Since the command pool is the backing memory for the buffer, we only need to destroy it not he buffer itself.
+Since the command pool is the backing memory for the buffer, we only need to destroy it.
