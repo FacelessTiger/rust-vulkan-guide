@@ -1,4 +1,5 @@
 use ash::vk;
+use ash::vk::TaggedStructure;
 
 pub struct Engine {
     _entry: ash::Entry,
@@ -43,6 +44,9 @@ impl Engine {
                 .ok_or(anyhow::anyhow!("No main queue available"))? as u32;
 
             let device = instance.create_device(physical_device, &vk::DeviceCreateInfo::default()
+                .push(&mut vk::PhysicalDeviceVulkan13Features::default()
+                    .synchronization2(true)
+                )
                 .queue_create_infos(&[vk::DeviceQueueCreateInfo::default()
                     .queue_family_index(queue_family)
                     .queue_priorities(&[1.0])
@@ -67,6 +71,24 @@ impl Engine {
         }
     }
 
+    pub fn run(&self) -> anyhow::Result<()> {
+        unsafe {
+            self.device.begin_command_buffer(self.cmd, &vk::CommandBufferBeginInfo::default()
+                .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT)
+            )?;
+            // Commands here
+            self.device.end_command_buffer(self.cmd)?;
+
+            self.device.queue_submit2(self.queue, &[vk::SubmitInfo2::default()
+                .command_buffer_infos(&[vk::CommandBufferSubmitInfo::default()
+                    .command_buffer(self.cmd)
+                ])
+            ], vk::Fence::null())?;
+            self.device.queue_wait_idle(self.queue)?;
+            Ok(())
+        }
+    }
+
     pub fn destroy(self) -> anyhow::Result<()> {
         unsafe {
             self.device.destroy_command_pool(self.command_pool, None);
@@ -79,6 +101,7 @@ impl Engine {
 
 fn main() -> anyhow::Result<()> {
     let engine = Engine::new()?;
+    engine.run()?;
     engine.destroy()?;
 
     Ok(())
