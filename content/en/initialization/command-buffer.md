@@ -55,3 +55,69 @@ impl Engine {
 }
 ````
 Since the command pool is the backing memory for the buffer, we only need to destroy it.
+## Starting and submitting the command buffer
+We don't have any buffers or work we could actually do in the command buffer yet, but let's set up a bit of a framework so we can easily in future pages.
+
+First we're going to add a `run` function to our `Engine` struct, where we fill it with commands after we finish initializing everything:
+````rust {wrap="false"}
+impl Engine {
+    pub fn run(&self) -> anyhow::Result<()> {
+        unsafe {
+            Ok(())
+        }
+    }
+}
+
+fn main() -> anyhow::Result<()> {
+    let engine = Engine::new()?;
+    engine.run()?;
+    engine.destroy()?;
+
+    Ok(())
+}
+````
+Now to actually fill the command buffer there's a pairing `begin` and `end` function, which is pretty self-explanatory:
+````rust {wrap="false"}
+self.device.begin_command_buffer(self.cmd, &vk::CommandBufferBeginInfo::default()
+    .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT)
+)?;
+// Commands here
+self.device.end_command_buffer(self.cmd)?;
+````
+The only special thing we're doing here with [vk::CommandBufferBeginInfo](https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBufferBeginInfo.html) is specifying the `ONE_TIME_SUBMIT` flag which just means we promise that each recording of this command buffer will only be submitted once, and that we will reset it between submissions. We're only doing one submission for now, so no need to reset. This flag just lets graphics drivers optimize how this command buffer is dealt with once it's submitted, it doesn't affect any behavior beyond the promise.
+
+Next, to actually submit this command buffer we'll call `device.queue_submit2(...)` notice that this has a 2 at the end. At some point a lot of old commands responsible for synchronizing work between host and device (including submitting work from command buffers to the device) were replaced with ones that were more ergonomic. That's why there's also a `queue_submit` (without the 2). These replacement functions are part of a feature called `synchronization2`, this was originally an extension but was promoted a core mandatory part of Vulkan in 1.3. Since we're using Vulkan 1.4, we can use this feature.
+
+As mentioned previously some features need to be enabled because of potential performance impact, and this is one of those cases. To do so we just add `vk::PhysicalDeviceVulkan13Features` to the pNext chain of our logical device creation with the `synchronization2` boolean set to true to enable the feature:
+````rust {wrap="false"}
+let device = instance.create_device(physical_device, &vk::DeviceCreateInfo::default()
+    .push(&mut vk::PhysicalDeviceVulkan13Features::default()
+        .synchronization2(true)
+    )
+    .queue_create_infos(&[vk::DeviceQueueCreateInfo::default()
+        .queue_family_index(queue_family)
+        .queue_priorities(&[1.0])
+    ]),
+None)?;
+````
+Now, back to our `run` function we can finally submit our command buffer:
+````rust {wrap="false"}
+self.device.queue_submit2(self.queue, &[vk::SubmitInfo2::default()
+    .command_buffer_infos(&[vk::CommandBufferSubmitInfo::default()
+        .command_buffer(self.cmd)
+    ])
+], vk::Fence::null())?;
+````
+This is pretty simple, it just takes the queue we're submitting to and a list of submissions. However, if you look at the arguments for [vk::SubmitInfo2](https://docs.vulkan.org/refpages/latest/refpages/source/VkSubmitInfo2.html) and the `queue_submit2` command itself we're ignoring wait semaphores, signal semaphores, and the fence parameter. Since the device is asynchronous (and usually an entirely separate piece of hardware from the host) we are given some tools to order work between itself and the host. Semaphores allow you to synchronize GPU→GPU work, for example waiting for a previous submission before doing the next. Fences are for GPU→CPU work, you can query them or wait for them to finish from host-side.
+
+In fact, if you run the program as is with validation layers on you'll get an error like so:
+```
+Validation Error: [ VUID-vkDestroyCommandPool-commandPool-00041 ] | MessageID = 0xad474cda
+vkDestroyCommandPool(): (VkCommandBuffer 0x15d27c1b130) is in use.
+The Vulkan spec states: All VkCommandBuffer objects allocated from commandPool must not be in the pending state (https://docs.vulkan.org/spec/latest/chapters/cmdbuffers.html#VUID-vkDestroyCommandPool-commandPool-00041)
+```
+"pending state" means that the device is still executing the work we submitted, so we're not allowed to destroy it until it finishes. We could use a fence to do so, but for the sake of simplicity we will just put this call right after the submission:
+````rust {wrap="false"}
+self.device.queue_wait_idle(self.queue)?;
+````
+This just blocks the host until *all* work (even across multiple submissions) on that queue is finished. Now that we have a framework, we can create a buffer and actually draw something next page!
