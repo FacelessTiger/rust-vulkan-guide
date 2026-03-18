@@ -14,20 +14,22 @@ impl Engine {
     pub fn new() -> anyhow::Result<Self> {
         unsafe {
             let entry = ash::Entry::load()?;
-            let instance = entry.create_instance(&vk::InstanceCreateInfo::default()
-                .application_info(&vk::ApplicationInfo::default()
-                    .api_version(vk::API_VERSION_1_4)
+            let instance = entry.create_instance(
+                &vk::InstanceCreateInfo::default().application_info(
+                    &vk::ApplicationInfo::default().api_version(vk::API_VERSION_1_4),
                 ),
-            None)?;
+                None,
+            )?;
 
             let physical_device = instance
                 .enumerate_physical_devices()?
                 .into_iter()
                 .min_by_key(|physical_device| {
-                    match instance.get_physical_device_properties(*physical_device).device_type {
+                    let properties = instance.get_physical_device_properties(*physical_device);
+                    match properties.device_type {
                         vk::PhysicalDeviceType::DISCRETE_GPU => 0,
                         vk::PhysicalDeviceType::INTEGRATED_GPU => 1,
-                        _ => 3,
+                        _ => 2,
                     }
                 })
                 .ok_or(anyhow::anyhow!("No physical devices available"))?;
@@ -35,22 +37,33 @@ impl Engine {
                 .get_physical_device_queue_family_properties(physical_device)
                 .into_iter()
                 .position(|properties| {
-                    properties.queue_flags.contains(vk::QueueFlags::GRAPHICS | vk::QueueFlags::COMPUTE | vk::QueueFlags::TRANSFER)
+                    properties.queue_flags.contains(
+                        vk::QueueFlags::GRAPHICS
+                            | vk::QueueFlags::COMPUTE
+                            | vk::QueueFlags::TRANSFER,
+                    )
                 })
-                .ok_or(anyhow::anyhow!("No main queue available"))? as u32;
+                .ok_or(anyhow::anyhow!("No main queue available"))?;
+            let queue_family = queue_family as u32;
 
-            let device = instance.create_device(physical_device, &vk::DeviceCreateInfo::default()
-                .queue_create_infos(&[vk::DeviceQueueCreateInfo::default()
-                    .queue_family_index(queue_family)
-                    .queue_priorities(&[1.0])
+            let device = instance.create_device(
+                physical_device,
+                &vk::DeviceCreateInfo::default().queue_create_infos(&[
+                    vk::DeviceQueueCreateInfo::default()
+                        .queue_family_index(queue_family)
+                        .queue_priorities(&[1.0]),
                 ]),
-            None)?;
+                None,
+            )?;
             let queue = device.get_device_queue(queue_family, 0);
 
             Ok(Self {
                 _entry: entry,
-                instance, physical_device, device,
-                queue, queue_family,
+                instance,
+                physical_device,
+                device,
+                queue,
+                queue_family,
             })
         }
     }

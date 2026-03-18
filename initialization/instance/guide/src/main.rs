@@ -9,11 +9,12 @@ impl Engine {
     pub fn new() -> anyhow::Result<Self> {
         unsafe {
             let entry = ash::Entry::load()?;
-            let instance = entry.create_instance(&vk::InstanceCreateInfo::default()
-                .application_info(&vk::ApplicationInfo::default()
-                    .api_version(vk::API_VERSION_1_4)
+            let instance = entry.create_instance(
+                &vk::InstanceCreateInfo::default().application_info(
+                    &vk::ApplicationInfo::default().api_version(vk::API_VERSION_1_4),
                 ),
-            None)?;
+                None,
+            )?;
 
             Ok(Self {
                 _entry: entry,
