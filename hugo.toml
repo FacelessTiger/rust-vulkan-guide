@@ -8,6 +8,7 @@ enableGitInfo = true
 [params]
 	themeVariant = "zen-dark"
 	collapsibleMenu = true
+	disableExplicitIndexURLs = true
 	disableLandingPageButton = true
 	showVisitedLinks = true
 	ordersectionsby = 'date'
