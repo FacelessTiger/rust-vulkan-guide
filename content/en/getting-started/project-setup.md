@@ -18,7 +18,7 @@ Note the patch, since Vulkan is a C API we're gonna want to use Rust bindings to
 
 If you don't know what all that means don't worry about it, it effectively just makes it up to date enough for our purposes.
 
-## Project setup
+## Project Setup
 Now create the `guide` binary crate as usual, with the given `Cargo.toml`
 ````toml {lineNos="true" wrap="false"}
 [package]
@@ -32,7 +32,7 @@ gpu-allocator = "0.28.0"
 ````
 Vulkan normally requires you to manually handle memory allocations for images and buffers and whatever else. Normally making a whole custom allocator is overboard for most projects, so we'll just use the `gpu-allocator` crate for that.
 
-## End result
+## End Result
 If you did everything correct your directory layout should look something like below:
 ````tree
 - project_name | folder
@@ -43,5 +43,5 @@ If you did everything correct your directory layout should look something like b
   - Cargo.lock | file-alt | secondary
   - Cargo.toml | file-alt | secondary
 ````
-## Validation layers
-Finally, to end this quick section off, you're gonna want to install the [latest Vulkan SDK](https://vulkan.lunarg.com/sdk/home) then have the `Vulkan Configurator` open in the background with the `Validation` configuration selected. When this tool is open it injects into any Vulkan app that runs and outputs in the console any potential issues (note anything after one validation error is undefined behavior). Feel free to modify any of the default configuration checks to your liking, one of note is the `Break` option under the `Debug Action` section. That'll cause a debug break when there's an error so you can figure out the exact problematic line when connected to a debugger.
+## Validation Layers
+Finally, to end this quick section off, you're gonna want to install the [latest Vulkan SDK](https://vulkan.lunarg.com/sdk/home) then have the `Vulkan Configurator` open in the background with the `Validation` configuration selected. When this tool is open, it injects into any Vulkan app that runs and outputs in the console any potential issues (note anything after one validation error is undefined behavior). Feel free to modify any of the default configuration checks to your liking, one of note is the `Break` option under the `Debug Action` section. That'll cause a debug break when there's an error so you can figure out the exact problematic line when connected to a debugger.

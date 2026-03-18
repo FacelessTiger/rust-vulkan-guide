@@ -2,8 +2,8 @@
 date = '2026-02-02T16:25:53-07:00'
 title = 'Instance'
 +++
-## Context struct
-We're going to encapsulate most of our objects we create then have to haul around (`Instance`, `Device`, etc.) into one god like `Engine` struct for the sake of convenience. We're also going to handle error handling with the `anyhow` crate, feel free to use more proper error handling methods but that is not in the scope of this guide. Add to `guide`'s `Cargo.toml`:
+## Context Struct
+We're going to encapsulate most of our objects we create then have to haul around (`Instance`, `Device`, etc.) into one god like `Engine` struct for the sake of convenience. We're also going to handle error handling with the `anyhow` crate, feel free to use properer error handling methods but that is not in the scope of this guide. Add to `guide`'s `Cargo.toml`:
 ````toml {wrap="false"}
 [dependencies]
 anyhow = "1.0.100"
@@ -41,12 +41,12 @@ fn main() -> anyhow::Result<()> {
 `ash::entry` we haven't talked about yet, it's pretty simple it just initially links to the Vulkan implementation and loads the functions we have to use before instance creation. Since it links to Vulkan we have to hold onto it. 
 
 Also notice we have a `destroy` function that consumes `self` instead of implementing `Drop`. The reason for this is that Vulkan has more limitations on when we can destroy stuff then the `Drop` trait enforces. For example, once we start making `Buffer`'s you need info about the device or allocator in order to actually destroy it, but the auto-running `Drop` doesn't let you provide arguments. Using consuming destroy functions gives us much more control.
-## How ash maps to the Vulkan spec
+## How Ash Maps to the Vulkan Spec
 To start with let's actually create the entry, which is pretty simple and self-explanatory.
 ```rust
 let entry = ash::Entry::load()?;
 ```
-Then, in order to create the instance we call `entry.create_instance()`, before we do that though if you look at the docs for that function you can see it links to the Vulkan spec with the function it binds to, in this case [vkCreateInstance](https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateInstance.html).
+Then, in order to create the instance we call `entry.create_instance()`. But, before we do that if you look at the docs for that function you can see it links to the Vulkan spec with the function it binds to, in this case [vkCreateInstance](https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateInstance.html).
 
 Let's look at the spec for that function:
 ````c {wrap="false"}
@@ -84,7 +84,7 @@ typedef struct VkBaseInStructure {
 So the implementation knows the exact type from `sType` and can follow the `pNext` chain downwards until it's null, brilliant! The way `ash` maps this is by having builder methods on structs, then the `default` method fills out that `sType` for you based on the type and zero initializes everything else. Vulkan *usually* has sane defaults for things you don't have to fill out when they're zeroed out, so this works great in practice. 
 
 To handle `pNext` it has a `push` method that can only be called on top level structs and takes in a reference to an extension struct, then prepends it between the root and the first pointer of the `pNext` chain. So if the current chain looks like `A -> B -> C` and you call `A.push(&mut D)` then the chain will look like `A -> D -> B -> C`.
-## Actually creating the instance
+## Actually Creating the Instance
 Looking at the rest of `VkInstanceCreateInfo` it looks like this:
 ````c {wrap="false"}
 // Provided by VK_VERSION_1_0
@@ -99,7 +99,7 @@ typedef struct VkInstanceCreateInfo {
 ````
 `VkApplicationInfo` contains info about our specific application, which we will come back to in a second. The other two parameters is a count and then pointer to a list of layer and extension names. `ash` maps these count + pointer pairs to Rust slices of course. 
 
-Layers basically inject into function calls you make and usually run stuff on top, but they don't add any functionality themselves. For example the validation configuration we're using in `Vulkan Configurator` adds `VK_LAYER_KHRONOS_validation` as an "implicit layer", which means that it's enabled by default without the developer having to specify it. That validation layer then just makes sure everything you're doing is valid per the Vulkan spec and throws error messages otherwise. Programs like OBS or Steam also use these implicit layers to record the program or draw overlays on top.
+Layers basically inject into function calls you make and usually run stuff on top, but they don't add any functionality themselves. For example, the validation configuration we're using in `Vulkan Configurator` adds `VK_LAYER_KHRONOS_validation` as an "implicit layer", which means that it's enabled by default without the developer having to specify it. That validation layer then just makes sure everything you're doing is valid per the Vulkan spec and throws error messages otherwise. Programs like OBS or Steam also use these implicit layers to record the program or draw overlays on top.
 
 Extensions, as briefly mentioned before actually add new structs and functions that you can use as a developer. Since these extensions are instance level they're "global" to all devices. When we get to creating devices they also have their own device-level extensions that are specific to that device and the graphics driver for it must support.
 
@@ -122,17 +122,18 @@ typedef struct VkApplicationInfo {
     uint32_t           apiVersion;
 } VkApplicationInfo;
 ````
-Same `sType` and `pNext` stuff as before, the other members is mostly info that's specific to the application like name, version, engine name, etc. Some graphics drivers like to make engine or application specific optimizations, and it uses the info specified there to differentiate. We will leave this info blank for this guide, but feel free to fill it out if you wish!
+Same `sType` and `pNext` stuff as before. The other members are mostly info that's specific to the application like name, version, engine name, etc. Some graphics drivers like to make engine or application specific optimizations, and it uses the info specified there to differentiate. We will leave this info blank for this guide, but feel free to fill it out if you wish!
 
-The important member we'll focus on is `apiVersion`, which essentially acts like the minimum Vulkan version that the device we pick must support. For example if we set it to 1.2 then we cannot pick devices that only support Vulkan 1.1 or 1.0. We can, however, pick a device that supports 1.3 since it's above 1.2, but then we can't use any 1.3 functionality since the instance is still 1.2.
+The important member we'll focus on is `apiVersion`, which essentially acts like the minimum Vulkan version that the device we pick must support. For example, if we set it to 1.2 then we cannot pick devices that only support Vulkan 1.1 or 1.0. We can, however, pick a device that supports 1.3 since it's above 1.2, but then we can't use any 1.3 functionality since the instance is still 1.2.
 
 For our case we're going to require the latest Vulkan version, 1.4. So now filling out the struct should look something like below:
 ````rust {wrap="false"}
-let instance = entry.create_instance(&vk::InstanceCreateInfo::default()
-    .application_info(&vk::ApplicationInfo::default()
-        .api_version(vk::API_VERSION_1_4)
+let instance = entry.create_instance(
+    &vk::InstanceCreateInfo::default().application_info(
+        &vk::ApplicationInfo::default().api_version(vk::API_VERSION_1_4),
     ),
-None)?;
+    None,
+)?;
 ````
 ## Destruction
 We need to manually destroy everything in Vulkan, so make sure to add to our destroy function
@@ -144,7 +145,7 @@ pub fn destroy(self) -> anyhow::Result<()> {
     }
 }
 ````
-## Closing thoughts
+## Closing Thoughts
 That was a lot of info to go through, I won't go as in depth with each individual argument from here on. It's just important to understand how to read the C API equivalent so you're able to map it on your own.
 
 That being said, please don't be intimidated by all the info, as mentioned Vulkan follows the patterns mentioned above so once you're used to it, it's very intuitive to write!
@@ -162,11 +163,12 @@ impl Engine {
     pub fn new() -> anyhow::Result<Self> {
         unsafe {
             let entry = ash::Entry::load()?;
-            let instance = entry.create_instance(&vk::InstanceCreateInfo::default()
-                .application_info(&vk::ApplicationInfo::default()
-                    .api_version(vk::API_VERSION_1_4)
+            let instance = entry.create_instance(
+                &vk::InstanceCreateInfo::default().application_info(
+                    &vk::ApplicationInfo::default().api_version(vk::API_VERSION_1_4),
                 ),
-                                                 None)?;
+                None,
+            )?;
 
             Ok(Self {
                 _entry: entry,
