@@ -1,0 +1,8 @@
+[workspace]
+resolver = "3"
+members = [
+    "guide"
+]
+
+[patch.crates-io]
+ash = { git = "https://github.com/FacelessTiger/ash.git" }
