@@ -2,7 +2,7 @@
 date = '2026-02-02T14:41:45-07:00'
 title = 'Project Setup'
 +++
-## Workspace setup
+## Workspace Setup
 For reasons, we'll get into later, we are gonna want to organize our project into a workspace. At the root of your project make a `Cargo.toml` and put this inside:
 ````toml {lineNos="true" wrap="false"}
 [workspace]
